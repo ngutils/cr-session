@@ -1,87 +1,177 @@
+
 angular.module('cr.session', [])
-.provider('crSession', [function() {
-    /**
-     * @var Object
-     */
-    this.adapters = {};
+.service('crSessionService', ['$rootScope', function($rootScope){
 
-    /**
-     * Default adapter name
-     * @var string
-     */
-    this._defaultAdapterName = "default";
+	this._adapter = {};
+	this._rootSession = "application";
+	this._remotes = {}; //?
+	this._defaultNamespace = "default";
+	
+	
+//	this._getNamespace = function(namespace) {
+//		if(namespace && in)
+//	};
+	
+	this.setRemoteAdapter = function(adapter, namespace) {
+    	namespace = (namespace) ? namespace : this._defaultNamespace;
+		this._remotes[namespace] = {
+			"adapter": adapter,
+			"sync": false
+		};
+		var self = this;
+		adapter.get({id:namespace}).then(function(data) {
+			self.setNamespace(data, namespace);
+			//event in syntax: module:resource:action:result
+			$rootScope.$broadcast("cr-session:remote:get:success", {"namespace":namespace, "data":data});
+		}, function(data) {
+			//event in syntax: module:resource:action:result
+			$rootScope.$broadcast("cr-session:remote:get:error", {"namespace":namespace, "data":data});
+		});
+		
+		
+	};
 
-    /**
-     * Default namespace
-     * @var string
-     */
-    this._baseNamespace = "application";
-
-    /**
-     * Add adapter to pool
-     * @param adapter Object session adapter
-     * @param key     String adapter name
-     */
-    this.setAdapter = function(adapter, key){
-        key = (key) ? key : this._defaultAdapterName;
-        this.adapters[key] = adapter;
-    };
-
-    /**
-     * Get adapter by name
-     * @param key string
-     */
-    this.getAdapter = function(key){
-        key = (key) ? key : this._defaultAdapterName;
-        if (this.adapters[key]) {
-            return this.adapters[key];
+	this.getNamespace = function(namespace) {
+    	namespace = (namespace) ? namespace : this._defaultNamespace;
+        var session = this._adapter.get(this._rootSession);
+        if(session[namespace]) {
+        	return session[namespace];
         }
-        throw "Adapter "+key+" not exist";
-    };
-
-    /**
-     * Set into default adapter
-     * @param key String
-     * @param value
-     * @param namespace String adapter name
-     */
-    this.set = function(key, value, namespace) {
-        if (!namespace) {
-            namespace = this._defaultAdapterName;
+        else {
+        	return null;
         }
-        var adapter = this.getAdapter(namespace);
-        var session = adapter.get([this._baseNamespace]);
-        if (!session) {
-            session = {};
-        }
-        if (!session[namespace]) {
-            session[namespace] = {};
-        }
-        session[namespace][key] = value;
-        adapter.set(this._baseNamespace, session);
-    };
-
-    /**
-     * Return value by namespace
-     * @param key String
-     * @param namespace String adapter name
-     * @return mixed
-     */
+	};
+	
+	this.setNamespace = function(value, namespace) {
+    	namespace = (namespace) ? namespace : this._defaultNamespace;
+        var session = this._adapter.get(this._rootSession);
+        session[namespace] = value;
+        this._adapter.set(this._rootSession, session);
+	};
+	
+	
     this.get = function(key, namespace) {
-        var defaultAdapter = this.getAdapter(namespace);
-        console.log(defaultAdapter.get(this._baseNamespace));
-        return defaultAdapter.get(this._baseNamespace)[namespace][key];
-    };
+    	namespace = (namespace) ? namespace : this._defaultNamespace;
+//        var adapter = this.getAdapter(namespace);
+//        console.log("questo è l'adapter", adapter.get(this._rootSession));
+        var session = this._adapter.get(this._rootSession);
 
-    this.$get = [function(){
-        return {
-            _defaultAdapterName: this._defaultAdapterName,
-            _baseNamespace: this._baseNamespace,
-            adapters: this.adapters,
-            setAdapter: this.setAdapter,
-            getAdapter: this.getAdapter,
-            set: this.set,
-            get: this.get
-        };
-    }];
-}]);
+//        console.log("X- sessione al get", session);
+        if(session[namespace] && session[namespace][key]) {
+        	return session[namespace][key];
+        }
+        else {
+        	return null;
+        }
+    };
+    
+    this.set = function(key, value, namespace) {
+    	namespace = (namespace) ? namespace : this._defaultNamespace;
+    	if(key) {
+            var session = this._adapter.get(this._rootSession);
+            if (!session) {
+                session = {};
+            }
+            if (!session[namespace]) {
+                session[namespace] = {};
+            }
+        	session[namespace][key] = value;
+            if(this._adapter.set) {
+            	this._adapter.set(this._rootSession, session);
+    //        	if(this.remoteAdapters[namespace]) {
+    //        		this.remoteAdapters[namespace].post(key, value);
+    //        	}
+            }
+    
+            var remote = this._remotes[namespace];
+            if(remote && remote.adapter) {
+            	remote.adapter.post({id:namespace, data: session[namespace]}).then(function(data) {
+        			$rootScope.$broadcast("cr-session:remote:set:success", {"namespace":namespace, "data":session[namespace]});
+            	}, function(data) {
+        			$rootScope.$broadcast("cr-session:remote:set:error", {"namespace":namespace, "data":session[namespace]});
+            	});
+            }
+        }
+//        console.log("X- sessione dopo il set", session);
+    };
+    
+    
+    this['delete'] = function(key, namespace) {
+        namespace = (namespace) ? namespace : this._defaultNamespace;
+        var session = this._adapter.get(this._rootSession);
+        if(session[key] !== null && session[key] !== undefined) {
+            delete session[key];
+        }
+        if(this._adapter.set) {
+            this._adapter.set(this._rootSession, session);
+        }
+        var remote = this._remotes[namespace];
+        if(remote && remote.adapter) {
+            remote.adapter.post({id:namespace, data: session[namespace]}).then(function(data) {
+                $rootScope.$broadcast("cr-session:remote:delete:success", {"namespace":namespace, "data":session[namespace]});
+            }, function(data) {
+                $rootScope.$broadcast("cr-session:remote:delete:error", {"namespace":namespace, "data":session[namespace]});
+            });
+        }
+        
+    };
+    
+    this.purge = function() {
+        var session = this._adapter.get(this._rootSession);
+        this._adapter.set(this._rootSession, null);
+
+        var remote = this._remotes[namespace];
+        if(remote && remote.adapter) {
+        	remote.adapter.post({id:namespace, data: null}).then(function(data) {
+    			$rootScope.$broadcast("cr-session:remote:purge:success", {"namespace":namespace, "data":null});
+        	}, function(data) {
+    			$rootScope.$broadcast("cr-session:remote:purge:error", {"namespace":namespace, "data":null});
+        	});
+        }
+    };
+    
+    this.purgeNamespace = function(namespace) {
+    	namespace = (namespace) ? namespace : this.defaultNamespace;
+        var session = this._adapter.get(this._rootSession);
+        delete session[namespace]; 
+        this._adapter.set(this._rootSession, session);
+
+        var remote = this._remotes[namespace];
+        if(remote && remote.adapter) {
+        	remote.adapter.post({id:namespace, data: null}).then(function(data) {
+    			$rootScope.$broadcast("cr-session:remote:purgenamespace:success", {"namespace":namespace, "data":null});
+        	}, function(data) {
+    			$rootScope.$broadcast("cr-session:remote:purgenamespace:error", {"namespace":namespace, "data":null});
+        	});
+        }
+    };
+    
+    this.createService = function(defaultAdapter) {
+    	this._adapter = defaultAdapter;
+    	return this;
+    };
+    
+}])
+.provider('crSession', function() {
+	
+	
+	this.$get = ['localStorageService', 'crSessionService', function(localStorageService, crSessionService){
+		var service = crSessionService.createService(localStorageService);
+		
+//		{
+//			_adapter: ,
+//			_rootSession: this._rootSession,
+//			_defaultNamespace: this._defaultNamespace,		
+//			_remotes: this._remotes,
+//			get: this.get,
+//			set: this.set,
+//			setNamespace: this.setNamespace,
+//			getNamespace: this.getNamespace,
+//			setRemoteAdapter: this.setRemoteAdapter
+//			
+//			
+//		};
+		return service;
+	}];
+});
+
