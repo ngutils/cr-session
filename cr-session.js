@@ -22,10 +22,10 @@ angular.module('cr.session', [])
 		adapter.get({id:namespace}).then(function(data) {
 			self.setNamespace(data, namespace);
 			//event in syntax: module:resource:action:result
-			$rootScope.$broadcast("cr-session:remote:get:success", {"namespace":namespace, "data":data});
+			$rootScope.$broadcast("remotesession:get:success", {"namespace":namespace, "data":data});
 		}, function(data) {
 			//event in syntax: module:resource:action:result
-			$rootScope.$broadcast("cr-session:remote:get:error", {"namespace":namespace, "data":data});
+			$rootScope.$broadcast("remotesession:get:error", {"namespace":namespace, "data":data});
 		});
 		
 		
@@ -76,6 +76,7 @@ angular.module('cr.session', [])
                 session[namespace] = {};
             }
         	session[namespace][key] = value;
+        	console.log("session set", key, value, namespace, session);
             if(this._adapter.set) {
             	this._adapter.set(this._rootSession, session);
     //        	if(this.remoteAdapters[namespace]) {
@@ -86,9 +87,9 @@ angular.module('cr.session', [])
             var remote = this._remotes[namespace];
             if(remote && remote.adapter) {
             	remote.adapter.post({id:namespace, data: session[namespace]}).then(function(data) {
-        			$rootScope.$broadcast("cr-session:remote:set:success", {"namespace":namespace, "data":session[namespace]});
+        			$rootScope.$broadcast("remotesession:set:success", {"namespace":namespace, "data":session[namespace]});
             	}, function(data) {
-        			$rootScope.$broadcast("cr-session:remote:set:error", {"namespace":namespace, "data":session[namespace]});
+        			$rootScope.$broadcast("remotesession:set:error", {"namespace":namespace, "data":session[namespace]});
             	});
             }
         }
@@ -108,9 +109,9 @@ angular.module('cr.session', [])
         var remote = this._remotes[namespace];
         if(remote && remote.adapter) {
             remote.adapter.post({id:namespace, data: session[namespace]}).then(function(data) {
-                $rootScope.$broadcast("cr-session:remote:delete:success", {"namespace":namespace, "data":session[namespace]});
+                $rootScope.$broadcast("remotesession:delete:success", {"namespace":namespace, "data":session[namespace]});
             }, function(data) {
-                $rootScope.$broadcast("cr-session:remote:delete:error", {"namespace":namespace, "data":session[namespace]});
+                $rootScope.$broadcast("remotesession:delete:error", {"namespace":namespace, "data":session[namespace]});
             });
         }
         
@@ -123,9 +124,9 @@ angular.module('cr.session', [])
         var remote = this._remotes[namespace];
         if(remote && remote.adapter) {
         	remote.adapter.post({id:namespace, data: null}).then(function(data) {
-    			$rootScope.$broadcast("cr-session:remote:purge:success", {"namespace":namespace, "data":null});
+    			$rootScope.$broadcast("remotesession:purge:success", {"namespace":namespace, "data":null});
         	}, function(data) {
-    			$rootScope.$broadcast("cr-session:remote:purge:error", {"namespace":namespace, "data":null});
+    			$rootScope.$broadcast("remotesession:purge:error", {"namespace":namespace, "data":null});
         	});
         }
     };
@@ -139,9 +140,9 @@ angular.module('cr.session', [])
         var remote = this._remotes[namespace];
         if(remote && remote.adapter) {
         	remote.adapter.post({id:namespace, data: null}).then(function(data) {
-    			$rootScope.$broadcast("cr-session:remote:purgenamespace:success", {"namespace":namespace, "data":null});
+    			$rootScope.$broadcast("remotesession:purgenamespace:success", {"namespace":namespace, "data":null});
         	}, function(data) {
-    			$rootScope.$broadcast("cr-session:remote:purgenamespace:error", {"namespace":namespace, "data":null});
+    			$rootScope.$broadcast("remotesession:purgenamespace:error", {"namespace":namespace, "data":null});
         	});
         }
     };
