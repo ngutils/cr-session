@@ -1,4 +1,6 @@
-
+/**
+ * Manage application session, local and remote
+ */
 angular.module('cr.session', [])
 .service('crSessionService', ['$rootScope', function($rootScope){
 
@@ -6,12 +8,12 @@ angular.module('cr.session', [])
 	this._rootSession = "application";
 	this._remotes = {}; //?
 	this._defaultNamespace = "default";
-	
-	
-//	this._getNamespace = function(namespace) {
-//		if(namespace && in)
-//	};
-	
+
+    /**
+     * Set list of adapter
+     * @param Object adapter
+     * @param String namespace
+     */
 	this.setRemoteAdapter = function(adapter, namespace) {
     	namespace = (namespace) ? namespace : this._defaultNamespace;
 		this._remotes[namespace] = {
@@ -21,16 +23,17 @@ angular.module('cr.session', [])
 		var self = this;
 		adapter.get({id:namespace}).then(function(data) {
 			self.setNamespace(data, namespace);
-			//event in syntax: module:resource:action:result
 			$rootScope.$broadcast("remotesession:get:success", {"namespace":namespace, "data":data});
 		}, function(data) {
-			//event in syntax: module:resource:action:result
 			$rootScope.$broadcast("remotesession:get:error", {"namespace":namespace, "data":data});
 		});
-		
-		
 	};
 
+    /**
+     * Return all values by namespace
+     * @param String namespace
+     * @return mixed
+     */
 	this.getNamespace = function(namespace) {
     	namespace = (namespace) ? namespace : this._defaultNamespace;
         var session = this._adapter.get(this._rootSession);
@@ -41,22 +44,28 @@ angular.module('cr.session', [])
         	return null;
         }
 	};
-	
+
+    /**
+     * Set Value in namespace
+     * @param mixed value
+     * @param String namespace
+     */
 	this.setNamespace = function(value, namespace) {
     	namespace = (namespace) ? namespace : this._defaultNamespace;
         var session = this._adapter.get(this._rootSession);
         session[namespace] = value;
         this._adapter.set(this._rootSession, session);
 	};
-	
-	
+
+    /**
+     * Return value
+     * @param String key
+     * @param String namespace
+     * @return mixed
+     */
     this.get = function(key, namespace) {
     	namespace = (namespace) ? namespace : this._defaultNamespace;
-//        var adapter = this.getAdapter(namespace);
-//        console.log("questo è l'adapter", adapter.get(this._rootSession));
         var session = this._adapter.get(this._rootSession);
-
-//        console.log("X- sessione al get", session);
         if(session[namespace] && session[namespace][key]) {
         	return session[namespace][key];
         }
@@ -64,7 +73,13 @@ angular.module('cr.session', [])
         	return null;
         }
     };
-    
+
+    /**
+     * Set value
+     * @param key String
+     * @param value mixed
+     * @param namespace String
+     */
     this.set = function(key, value, namespace) {
     	namespace = (namespace) ? namespace : this._defaultNamespace;
     	if(key) {
@@ -76,14 +91,10 @@ angular.module('cr.session', [])
                 session[namespace] = {};
             }
         	session[namespace][key] = value;
-        	console.log("session set", key, value, namespace, session);
             if(this._adapter.set) {
             	this._adapter.set(this._rootSession, session);
-    //        	if(this.remoteAdapters[namespace]) {
-    //        		this.remoteAdapters[namespace].post(key, value);
-    //        	}
             }
-    
+
             var remote = this._remotes[namespace];
             if(remote && remote.adapter) {
             	remote.adapter.post({id:namespace, data: session[namespace]}).then(function(data) {
@@ -93,10 +104,13 @@ angular.module('cr.session', [])
             	});
             }
         }
-//        console.log("X- sessione dopo il set", session);
     };
-    
-    
+
+    /**
+     * Delete value
+     * @param String key
+     * @param String namespace
+     */
     this['delete'] = function(key, namespace) {
         namespace = (namespace) ? namespace : this._defaultNamespace;
         var session = this._adapter.get(this._rootSession);
@@ -114,9 +128,12 @@ angular.module('cr.session', [])
                 $rootScope.$broadcast("remotesession:delete:error", {"namespace":namespace, "data":session[namespace]});
             });
         }
-        
+
     };
-    
+
+    /**
+     * Clean all session
+     */
     this.purge = function() {
         var session = this._adapter.get(this._rootSession);
         this._adapter.set(this._rootSession, null);
@@ -130,13 +147,16 @@ angular.module('cr.session', [])
         	});
         }
     };
-    
+
+    /**
+     * Purge all namespace
+     * @param String namespace
+     */
     this.purgeNamespace = function(namespace) {
     	namespace = (namespace) ? namespace : this.defaultNamespace;
         var session = this._adapter.get(this._rootSession);
-        delete session[namespace]; 
+        delete session[namespace];
         this._adapter.set(this._rootSession, session);
-
         var remote = this._remotes[namespace];
         if(remote && remote.adapter) {
         	remote.adapter.post({id:namespace, data: null}).then(function(data) {
@@ -146,33 +166,19 @@ angular.module('cr.session', [])
         	});
         }
     };
-    
+
+    /**
+     * Create service
+     * @param Object defaultAdapter default session adapter
+     */
     this.createService = function(defaultAdapter) {
     	this._adapter = defaultAdapter;
     	return this;
     };
-    
 }])
 .provider('crSession', function() {
-	
-	
 	this.$get = ['localStorageService', 'crSessionService', function(localStorageService, crSessionService){
 		var service = crSessionService.createService(localStorageService);
-		
-//		{
-//			_adapter: ,
-//			_rootSession: this._rootSession,
-//			_defaultNamespace: this._defaultNamespace,		
-//			_remotes: this._remotes,
-//			get: this.get,
-//			set: this.set,
-//			setNamespace: this.setNamespace,
-//			getNamespace: this.getNamespace,
-//			setRemoteAdapter: this.setRemoteAdapter
-//			
-//			
-//		};
 		return service;
 	}];
 });
-
