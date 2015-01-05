@@ -8,19 +8,19 @@ angular.module('cr.session', [])
 	this._rootSession = "application";
 	this._remotes = {}; //?
 	this._defaultNamespace = "default";
+	var self = this;
 
     /**
      * Set list of adapter
      * @param Object adapter
      * @param String namespace
      */
-	this.setRemoteAdapter = function(adapter, namespace) {
-    	namespace = (namespace) ? namespace : this._defaultNamespace;
-		this._remotes[namespace] = {
+	self.setRemoteAdapter = function(adapter, namespace) {
+    	namespace = (namespace) ? namespace : self._defaultNamespace;
+		self._remotes[namespace] = {
 			"adapter": adapter,
 			"sync": false
 		};
-		var self = this;
 		adapter.get({id:namespace}).then(function(data) {
 			self.setNamespace(data, namespace);
 			$rootScope.$broadcast("remotesession:get:success", {"namespace":namespace, "data":data});
@@ -34,9 +34,9 @@ angular.module('cr.session', [])
      * @param String namespace
      * @return mixed
      */
-	this.getNamespace = function(namespace) {
-    	namespace = (namespace) ? namespace : this._defaultNamespace;
-        var session = this._adapter.get(this._rootSession);
+	self.getNamespace = function(namespace) {
+    	namespace = (namespace) ? namespace : self._defaultNamespace;
+        var session = self._adapter.get(self._rootSession);
         if(session[namespace]) {
         	return session[namespace];
         }
@@ -50,11 +50,11 @@ angular.module('cr.session', [])
      * @param mixed value
      * @param String namespace
      */
-	this.setNamespace = function(value, namespace) {
-    	namespace = (namespace) ? namespace : this._defaultNamespace;
-        var session = this._adapter.get(this._rootSession);
+	self.setNamespace = function(value, namespace) {
+    	namespace = (namespace) ? namespace : self._defaultNamespace;
+        var session = self._adapter.get(self._rootSession);
         session[namespace] = value;
-        this._adapter.set(this._rootSession, session);
+        self._adapter.set(self._rootSession, session);
 	};
 
     /**
@@ -63,9 +63,9 @@ angular.module('cr.session', [])
      * @param String namespace
      * @return mixed
      */
-    this.get = function(key, namespace) {
-    	namespace = (namespace) ? namespace : this._defaultNamespace;
-        var session = this._adapter.get(this._rootSession);
+    self.get = function(key, namespace) {
+    	namespace = (namespace) ? namespace : self._defaultNamespace;
+        var session = self._adapter.get(self._rootSession);
         if(session[namespace] && session[namespace][key]) {
         	return session[namespace][key];
         }
@@ -80,10 +80,10 @@ angular.module('cr.session', [])
      * @param value mixed
      * @param namespace String
      */
-    this.set = function(key, value, namespace) {
-    	namespace = (namespace) ? namespace : this._defaultNamespace;
+    self.set = function(key, value, namespace) {
+    	namespace = (namespace) ? namespace : self._defaultNamespace;
     	if(key) {
-            var session = this._adapter.get(this._rootSession);
+            var session = self._adapter.get(self._rootSession);
             if (!session) {
                 session = {};
             }
@@ -91,11 +91,11 @@ angular.module('cr.session', [])
                 session[namespace] = {};
             }
         	session[namespace][key] = value;
-            if(this._adapter.set) {
-            	this._adapter.set(this._rootSession, session);
+            if(self._adapter.set) {
+            	self._adapter.set(self._rootSession, session);
             }
 
-            var remote = this._remotes[namespace];
+            var remote = self._remotes[namespace];
             if(remote && remote.adapter) {
             	remote.adapter.post({id:namespace, data: session[namespace]}).then(function(data) {
         			$rootScope.$broadcast("remotesession:set:success", {"namespace":namespace, "data":session[namespace]});
@@ -111,16 +111,16 @@ angular.module('cr.session', [])
      * @param String key
      * @param String namespace
      */
-    this['delete'] = function(key, namespace) {
-        namespace = (namespace) ? namespace : this._defaultNamespace;
-        var session = this._adapter.get(this._rootSession);
+    self['delete'] = function(key, namespace) {
+        namespace = (namespace) ? namespace : self._defaultNamespace;
+        var session = self._adapter.get(self._rootSession);
         if(session[key] !== null && session[key] !== undefined) {
             delete session[key];
         }
-        if(this._adapter.set) {
-            this._adapter.set(this._rootSession, session);
+        if(self._adapter.set) {
+            self._adapter.set(self._rootSession, session);
         }
-        var remote = this._remotes[namespace];
+        var remote = self._remotes[namespace];
         if(remote && remote.adapter) {
             remote.adapter.post({id:namespace, data: session[namespace]}).then(function(data) {
                 $rootScope.$broadcast("remotesession:delete:success", {"namespace":namespace, "data":session[namespace]});
@@ -134,11 +134,11 @@ angular.module('cr.session', [])
     /**
      * Clean all session
      */
-    this.purge = function() {
-        var session = this._adapter.get(this._rootSession);
-        this._adapter.set(this._rootSession, null);
+    self.purge = function() {
+        var session = self._adapter.get(self._rootSession);
+        self._adapter.set(self._rootSession, null);
 
-        var remote = this._remotes[namespace];
+        var remote = self._remotes[namespace];
         if(remote && remote.adapter) {
         	remote.adapter.post({id:namespace, data: null}).then(function(data) {
     			$rootScope.$broadcast("remotesession:purge:success", {"namespace":namespace, "data":null});
@@ -152,12 +152,12 @@ angular.module('cr.session', [])
      * Purge all namespace
      * @param String namespace
      */
-    this.purgeNamespace = function(namespace) {
-    	namespace = (namespace) ? namespace : this.defaultNamespace;
-        var session = this._adapter.get(this._rootSession);
+    self.purgeNamespace = function(namespace) {
+    	namespace = (namespace) ? namespace : self.defaultNamespace;
+        var session = self._adapter.get(self._rootSession);
         delete session[namespace];
-        this._adapter.set(this._rootSession, session);
-        var remote = this._remotes[namespace];
+        self._adapter.set(self._rootSession, session);
+        var remote = self._remotes[namespace];
         if(remote && remote.adapter) {
         	remote.adapter.post({id:namespace, data: null}).then(function(data) {
     			$rootScope.$broadcast("remotesession:purgenamespace:success", {"namespace":namespace, "data":null});
@@ -166,14 +166,30 @@ angular.module('cr.session', [])
         	});
         }
     };
+    
+    /** 
+     * Retrieve remote data and write on local data after successful set of identity 
+     */
+    $rootScope.$on("auth:identity:success", function(event, data) {
+        var callbackSuccess = function(data) {
+            self.setNamespace(data, iii);
+            $rootScope.$broadcast("remotesession:get:success", {"namespace":iii, "data":data});
+        };
+        var callbackError = function(data) {
+            $rootScope.$broadcast("remotesession:get:error", {"namespace":iii, "data":data});
+        };
+        for(var iii in self._remotes) {
+            self._remotes[iii].adapter.get({id:iii}).then(callbackSuccess, callbackError);
+        }
+    });
 
     /**
      * Create service
      * @param Object defaultAdapter default session adapter
      */
-    this.createService = function(defaultAdapter) {
-    	this._adapter = defaultAdapter;
-    	return this;
+    self.createService = function(defaultAdapter) {
+    	self._adapter = defaultAdapter;
+    	return self;
     };
 }])
 .provider('crSession', function() {
