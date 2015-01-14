@@ -58,6 +58,21 @@ angular.module('cr.session', [])
 	};
 
     /**
+     * Init root session if is empty
+     * @param String namespace
+     * @return mixed
+     */
+    self.initRootSessionNode = function(namespace){
+        var session = self._adapter.get(self._rootSession);
+        if(session == undefined) {
+            var startup = {};
+            startup[namespace] = {};
+            self._adapter.set(self._rootSession, startup);
+        }
+        return self._adapter.get(self._rootSession)[namespace];
+    };
+
+    /**
      * Return value
      * @param String key
      * @param String namespace
@@ -66,12 +81,13 @@ angular.module('cr.session', [])
     self.get = function(key, namespace) {
     	namespace = (namespace) ? namespace : self._defaultNamespace;
         var session = self._adapter.get(self._rootSession);
-        if(session[namespace] && session[namespace][key]) {
+        if(session == undefined) {
+            session = self.initRootSessionNode(namespace);
+        }
+        if (namespace in session) {
         	return session[namespace][key];
         }
-        else {
-        	return null;
-        }
+        return null;
     };
 
     /**
@@ -166,9 +182,9 @@ angular.module('cr.session', [])
         	});
         }
     };
-    
-    /** 
-     * Retrieve remote data and write on local data after successful set of identity 
+
+    /**
+     * Retrieve remote data and write on local data after successful set of identity
      */
     $rootScope.$on("auth:identity:success", function(event, data) {
         var callbackSuccess = function(data) {
