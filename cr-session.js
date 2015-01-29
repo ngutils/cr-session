@@ -1,7 +1,9 @@
 /**
  * Manage application session, local and remote
  */
-angular.module('cr.session', [])
+angular.module('cr.session', [
+  'LocalStorageModule'
+])
 .service('crSessionService', ['$rootScope', function($rootScope){
 
 	this._adapter = {};
