@@ -12,4 +12,9 @@ describe("cr-session module", function(){
         expect(crSession).toBeDefined();
     }));
 
+    it('store string into test namepsace', inject(function(crSession) {
+        crSession.set("test", "string")
+        expect(crSession.get("test")).toBe("string");
+    }));
+
 });
