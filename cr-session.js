@@ -161,16 +161,16 @@ angular.module('cr.session', [
         var session = self._adapter.get(self._rootSession);
         self._adapter.set(self._rootSession, null);
 
-        var remote = self._remotes[namespace];
-        if(remote && remote.adapter) {
-        	remote.adapter.post({id:namespace, data: null}).then(function(data) {
-            $rootScope.$broadcast("remotesession:purge:success", {"namespace":namespace, "data":null});
-            $log.debug("[crSession] Broadcast remotesession:purge:success");
-        	}, function(data) {
-            $rootScope.$broadcast("remotesession:purge:error", {"namespace":namespace, "data":null});
-            $log.error("[crSession] Broadcast remotesession:purge:error");
-        	});
-        }
+        // var remote = self._remotes[namespace];
+        // if(remote && remote.adapter) {
+        // 	remote.adapter.post({id:namespace, data: null}).then(function(data) {
+        //     $rootScope.$broadcast("remotesession:purge:success", {"namespace":namespace, "data":null});
+        //     $log.debug("[crSession] Broadcast remotesession:purge:success");
+        // 	}, function(data) {
+        //     $rootScope.$broadcast("remotesession:purge:error", {"namespace":namespace, "data":null});
+        //     $log.error("[crSession] Broadcast remotesession:purge:error");
+        // 	});
+        // }
     };
 
     /**
