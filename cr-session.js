@@ -135,8 +135,8 @@ angular.module('cr.session', [
     self['delete'] = function(key, namespace) {
         namespace = (namespace) ? namespace : self._defaultNamespace;
         var session = self._adapter.get(self._rootSession);
-        if(session[key] !== null && session[key] !== undefined) {
-            delete session[key];
+        if(session[namespace][key] !== null && session[namespace][key] !== undefined) {
+            delete session[namespace][key];
         }
         if(self._adapter.set) {
             self._adapter.set(self._rootSession, session);
