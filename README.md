@@ -1,6 +1,6 @@
+# crSession
 [![Build Status](https://travis-ci.org/ngutils/cr-session.svg)](https://travis-ci.org/ngutils/cr-session)
 
-# crSession
 This library helps you to manage the application session. It has an adapter layer, at the moment it supports
 
 * local storage
