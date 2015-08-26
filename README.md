@@ -42,7 +42,7 @@ crSession.purge()
 ## Advanced usage
 This library support `namespace` a good strategy to divide the session in different arguments, default namespace is `application` but you can change it or you can use different namespace in the same app.
 ```javascript
-crSession.set("key-test", "{my: 'content'}", "namespace-new"")
+crSession.set("key-test", "{my: 'content'}", "namespace-new")
 console.log(crSession.get("key-test", "namespace-new")); // "{my: 'content'}"
 crSession.purgeNamespace("namespace-new")
 ```
