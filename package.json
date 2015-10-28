@@ -1,5 +1,6 @@
 {
     "name": "cr-session",
+    "version": "0.4.1",
     "devDependencies": {
         "karma": "~0.12",
         "karma-cli": "*",

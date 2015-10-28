@@ -1,6 +1,6 @@
 {
     "name": "cr-session",
-    "version": "0.0.1",
+    "version": "0.4.1",
     "dependencies": {
         "angular": ">=1.2.0",
         "angular-local-storage": "~0.2"
