@@ -4,7 +4,7 @@
 angular.module('cr.session', [
   'LocalStorageModule'
 ])
-.service('crSessionService', ['$rootScope', '$log', function($rootScope, $log){
+.service('crSessionService', ['$rootScope', '$log', '$q', function($rootScope, $log, $q){
 
 	this._adapter = {};
 	this._rootSession = "application";
@@ -214,6 +214,15 @@ angular.module('cr.session', [
      */
     self.createService = function(defaultAdapter) {
     	self._adapter = defaultAdapter;
+
+      self.init = defaultAdapter.init;
+      if(self.init === undefined) {
+        self.init = function() {
+          var d = $q.defer();
+          d.resolve();
+          return d.promise;
+        };
+      }
     	return self;
     };
 }])
